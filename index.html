@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Black and White</title>
+
+  <script>
+    function normalizeAngle(n) {
+      n = n % (Math.PI * 2);
+      if (n < 0) n += Math.PI * 2;
+      return n;
+    }
+
+    function shortestAngleDisplacement(from, to) {
+      var diff = normalizeAngle(to - from);
+      var comp = normalizeAngle(Math.PI * 2 - diff);
+      if (diff >= comp) {
+        return -comp;
+      }
+      if (comp > diff) {
+        return diff;
+      }
+    }
+
+    const PI = Math.PI;
+    const PI_2 = PI * 2;
+    const PI_HALF = PI / 2;
+
+    let w = 30;
+    let h = 30;
+    let outerSize = 20;
+    let innerSize = outerSize - 5;
+    let canvas, context;
+
+    let points = [];
+
+    for (let x = 0; x < w; x++) {
+      for (let y = 0; y < h; y++) {
+        let point = {
+          x,
+          y,
+          angle: 0,
+          target: PI_HALF / 2
+        };
+
+        points.push(point);
+      }
+    }
+
+    window.addEventListener("load", e => {
+      canvas = document.getElementById("canvas");
+      context = canvas.getContext("2d");
+
+      canvas.width = outerSize * w;
+      canvas.height = outerSize * h;
+
+      loop();
+    });
+
+    function loop() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < points.length; i++) {
+        let point = points[i];
+        let x = point.x * outerSize + outerSize / 2;
+        let y = point.y * outerSize + outerSize / 2;
+        point.angle += shortestAngleDisplacement(point.angle, point.target)/25;
+        let as = point.angle - PI_HALF;
+        let ae = point.angle + PI_HALF;
+        context.beginPath();
+        context.arc(x, y, innerSize / 2, as, ae);
+        context.closePath();
+        context.fill();
+      }
+
+      requestAnimationFrame(loop);
+    }
+
+    let delay = 10;
+
+    let states = [
+      function(){
+        for(let x = 0; x < w; x++){
+          for(let y = 0; y < h; y++){
+            let i = y * w + x;
+            let point = points[i];
+            setTimeout(() => {
+              if(x < y){
+                point.target = 0;
+              } else if(x == y) {
+                point.target = PI_HALF / 2;
+              } else {
+                point.target = PI_HALF;
+              }
+            }, i * delay);
+          }
+        }
+      },
+      function(){
+        for(let i = 0; i < points.length; i++){
+          let point = points[i];
+          let dx = w / 2 - point.x;
+          let dy = h / 2 - point.y;
+          setTimeout(() => {
+            point.target = Math.atan2(dy, dx) + PI;
+          }, i * delay);
+        }
+      }
+    ];
+
+    setInterval(() => {
+      let index = Math.floor(Math.random() * states.length);
+      states[index]();
+    }, 5000);
+  </script>
+  <style>
+    body,
+    html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="canvas"></canvas>
+</body>
+
+</html>
